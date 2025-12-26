@@ -70,13 +70,35 @@
         touch-action: none;
       }
       
+      /* UI Overlay Root - syncs perfectly with canvas position */
+      #ui-overlay-root {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+        overflow: hidden;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        -moz-user-select: none;
+             user-select: none;
+        -webkit-user-select: none;
+      }
+      
+      /* UI overlay children can have pointer events */
+      #ui-overlay-root .ui-interactive {
+        pointer-events: auto;
+      }
+      
       /* Debug overlay for mobile error display - ALWAYS visible when errors occur */
       #debug-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        max-height: 35%;
+        max-height: 40%;
         overflow-y: auto;
         background: rgba(0, 0, 0, 0.95);
         color: #ff6b6b;
@@ -115,6 +137,9 @@
         color: #88ff88;
         font-size: 9px;
         margin-bottom: 4px;
+        padding: 4px;
+        background: rgba(0,100,0,0.2);
+        border-radius: 3px;
       }
       
       #debug-overlay .close-btn {
@@ -251,11 +276,14 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-VRF5ycgz.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-PoJPB3Fs.css">
+    <script type="module" crossorigin src="./assets/index-DP9Omewu.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-D1B8Z090.css">
   </head>
   <body>
-    <div id="game-container"></div>
+    <div id="game-container">
+      <!-- UI Overlay Root - positioned exactly on top of canvas -->
+      <div id="ui-overlay-root"></div>
+    </div>
     
     <!-- Debug overlay for mobile error display -->
     <div id="debug-overlay">
@@ -308,6 +336,8 @@
         window.addEventListener('resize', updateViewportHeight);
         window.addEventListener('orientationchange', function() {
           setTimeout(updateViewportHeight, 100);
+          setTimeout(updateViewportHeight, 300);
+          setTimeout(syncUIOverlay, 150);
         });
         
         if (window.visualViewport) {
@@ -315,12 +345,64 @@
           window.visualViewport.addEventListener('scroll', updateViewportHeight);
         }
         
-        // ===== 2. DEBUG OVERLAY MANAGEMENT =====
+        // ===== 2. UI OVERLAY SYNC - Canvas rect based positioning =====
+        function syncUIOverlay() {
+          try {
+            var container = document.getElementById('game-container');
+            var overlay = document.getElementById('ui-overlay-root');
+            var canvas = container ? container.querySelector('canvas') : null;
+            
+            if (!overlay || !container) return;
+            
+            if (canvas) {
+              // Sync overlay to canvas position and size
+              var rect = canvas.getBoundingClientRect();
+              var containerRect = container.getBoundingClientRect();
+              
+              overlay.style.position = 'absolute';
+              overlay.style.left = (rect.left - containerRect.left) + 'px';
+              overlay.style.top = (rect.top - containerRect.top) + 'px';
+              overlay.style.width = rect.width + 'px';
+              overlay.style.height = rect.height + 'px';
+            } else {
+              // No canvas yet - fill container
+              overlay.style.position = 'absolute';
+              overlay.style.left = '0';
+              overlay.style.top = '0';
+              overlay.style.width = '100%';
+              overlay.style.height = '100%';
+            }
+          } catch (e) {
+            console.warn('[UIOverlay] Sync error:', e);
+          }
+        }
+        
+        // Sync overlay on resize/orientation
+        window.addEventListener('resize', syncUIOverlay);
+        window.addEventListener('orientationchange', function() {
+          setTimeout(syncUIOverlay, 100);
+          setTimeout(syncUIOverlay, 300);
+        });
+        
+        // Continuous sync via requestAnimationFrame (light touch)
+        var lastSyncTime = 0;
+        function rafSync() {
+          var now = performance.now();
+          if (now - lastSyncTime > 100) { // Sync every 100ms max
+            lastSyncTime = now;
+            syncUIOverlay();
+          }
+          requestAnimationFrame(rafSync);
+        }
+        requestAnimationFrame(rafSync);
+        
+        // ===== 3. DEBUG OVERLAY MANAGEMENT =====
         var errors = [];
-        var maxErrors = 8;
+        var maxErrors = 10;
         var gameInfo = {
           renderer: 'unknown',
           scene: 'unknown',
+          step: 'init',
           dpr: window.devicePixelRatio || 1,
           isMobile: 'ontouchstart' in window || navigator.maxTouchPoints > 0
         };
@@ -344,12 +426,13 @@
             errors.shift();
           }
           
-          // Build HTML
+          // Build HTML with enhanced info
           var html = '<div class="debug-info">';
           html += 'Device: ' + (gameInfo.isMobile ? 'Mobile' : 'Desktop');
           html += ' | DPR: ' + gameInfo.dpr.toFixed(1);
           html += ' | Renderer: ' + gameInfo.renderer;
           html += ' | Scene: ' + gameInfo.scene;
+          html += ' | Step: ' + gameInfo.step;
           html += '</div>';
           
           for (var i = errors.length - 1; i >= 0; i--) {
@@ -370,15 +453,16 @@
         window.updateGameDebugInfo = function(info) {
           if (info.renderer) gameInfo.renderer = info.renderer;
           if (info.scene) gameInfo.scene = info.scene;
+          if (info.step) gameInfo.step = info.step;
         };
         
-        // ===== 3. GLOBAL ERROR HANDLERS =====
+        // ===== 4. GLOBAL ERROR HANDLERS =====
         window.onerror = function(message, source, lineno, colno, error) {
           var errorMessage = message || 'Unknown error';
           var stack = '';
           
           if (error && error.stack) {
-            stack = error.stack.substring(0, 400);
+            stack = error.stack.substring(0, 500);
           } else if (source) {
             stack = 'at ' + source + ':' + lineno + ':' + colno;
           }
@@ -386,7 +470,8 @@
           console.error('[Global Error]', errorMessage, stack);
           showError('Error', String(errorMessage), stack);
           
-          return false;
+          // Prevent crash - return true to mark as handled
+          return true;
         };
         
         window.addEventListener('unhandledrejection', function(event) {
@@ -400,11 +485,11 @@
             } else if (reason.message) {
               message = reason.message;
               if (reason.stack) {
-                stack = reason.stack.substring(0, 400);
+                stack = reason.stack.substring(0, 500);
               }
             } else {
               try {
-                message = JSON.stringify(reason).substring(0, 150);
+                message = JSON.stringify(reason).substring(0, 200);
               } catch (e) {
                 message = 'Unknown promise rejection';
               }
@@ -426,7 +511,7 @@
             var message = Array.prototype.slice.call(arguments).map(function(arg) {
               if (typeof arg === 'object') {
                 try {
-                  return JSON.stringify(arg).substring(0, 150);
+                  return JSON.stringify(arg).substring(0, 200);
                 } catch (e) {
                   return String(arg);
                 }
@@ -434,27 +519,31 @@
               return String(arg);
             }).join(' ');
             
-            showError('Console.error', message.substring(0, 400), '');
+            showError('Console.error', message.substring(0, 500), '');
           }
         };
         
-        // ===== 4. WATCHDOG - DETECT STUCK GAME =====
+        // ===== 5. WATCHDOG - DETECT STUCK GAME WITH AUTO-RECOVERY =====
         var watchdogTimeout = null;
         var watchdogTriggered = false;
         var gameStarted = false;
-        var recoveryAttempts = 0;
+        var recoveryAttempt = parseInt(sessionStorage.getItem('recoveryAttempt') || '0', 10);
         var maxRecoveryAttempts = 3;
+        
+        // Expose recovery attempt to game
+        window.recoveryAttempt = recoveryAttempt;
         
         function startWatchdog() {
           if (watchdogTimeout) clearTimeout(watchdogTimeout);
           
+          // 8 second timeout for first update
           watchdogTimeout = setTimeout(function() {
             if (!gameStarted && !watchdogTriggered) {
               watchdogTriggered = true;
               console.error('[Watchdog] Game appears stuck - triggering recovery');
               showWatchdogOverlay();
             }
-          }, 8000); // 8 seconds timeout
+          }, 8000);
         }
         
         function stopWatchdog() {
@@ -463,6 +552,9 @@
             clearTimeout(watchdogTimeout);
             watchdogTimeout = null;
           }
+          // Clear recovery attempts on successful start
+          sessionStorage.removeItem('recoveryAttempt');
+          window.recoveryAttempt = 0;
         }
         
         function showWatchdogOverlay() {
@@ -473,21 +565,26 @@
             overlay.classList.add('visible');
           }
           
+          recoveryAttempt++;
+          sessionStorage.setItem('recoveryAttempt', String(recoveryAttempt));
+          window.recoveryAttempt = recoveryAttempt;
+          
           if (status) {
-            status.textContent = 'Recovery attempt ' + (recoveryAttempts + 1) + ' of ' + maxRecoveryAttempts;
+            status.textContent = 'Recovery attempt ' + recoveryAttempt + ' of ' + maxRecoveryAttempts;
           }
           
           // Auto-recovery after 3 seconds
           setTimeout(function() {
-            if (recoveryAttempts < maxRecoveryAttempts) {
-              recoveryAttempts++;
+            if (recoveryAttempt < maxRecoveryAttempts) {
               if (status) {
-                status.textContent = 'Reloading...';
+                status.textContent = 'Reloading with safe settings...';
               }
+              // Increment and force canvas on next load
+              sessionStorage.setItem('forceCanvasRenderer', 'true');
               window.location.reload();
             } else {
               if (status) {
-                status.textContent = 'Max attempts reached. Please try Safe Mode.';
+                status.textContent = 'Max attempts reached. Please try Safe Mode manually.';
               }
             }
           }, 3000);
@@ -500,7 +597,8 @@
         // Force canvas fallback (safe mode)
         window.forceCanvasFallback = function() {
           try {
-            localStorage.setItem('forceCanvasRenderer', 'true');
+            sessionStorage.setItem('forceCanvasRenderer', 'true');
+            sessionStorage.setItem('recoveryAttempt', '1');
           } catch(e) {}
           window.location.reload();
         };
@@ -508,7 +606,7 @@
         // Check if we should force canvas
         window.shouldForceCanvas = function() {
           try {
-            return localStorage.getItem('forceCanvasRenderer') === 'true';
+            return sessionStorage.getItem('forceCanvasRenderer') === 'true';
           } catch(e) {
             return false;
           }
@@ -517,14 +615,31 @@
         // Clear canvas force after successful load
         window.clearCanvasForce = function() {
           try {
-            localStorage.removeItem('forceCanvasRenderer');
+            sessionStorage.removeItem('forceCanvasRenderer');
+            sessionStorage.removeItem('recoveryAttempt');
+          } catch(e) {}
+        };
+        
+        // Force resolution (for recovery)
+        window.getForceResolution = function() {
+          try {
+            var res = sessionStorage.getItem('forceResolution');
+            return res ? parseFloat(res) : null;
+          } catch(e) {
+            return null;
+          }
+        };
+        
+        window.setForceResolution = function(res) {
+          try {
+            sessionStorage.setItem('forceResolution', String(res));
           } catch(e) {}
         };
         
         // Start watchdog immediately
         startWatchdog();
         
-        // ===== 5. WEBGL CONTEXT HANDLING =====
+        // ===== 6. WEBGL CONTEXT HANDLING =====
         var webglRecoveryAttempts = 0;
         var maxWebglRecovery = 3;
         
@@ -562,7 +677,7 @@
                   webglRecoveryAttempts++;
                   
                   if (webglRecoveryAttempts >= maxWebglRecovery) {
-                    // Force canvas fallback
+                    // Force canvas fallback after multiple WebGL failures
                     window.forceCanvasFallback();
                   } else {
                     window.location.reload();
@@ -603,7 +718,7 @@
         // Expose error display function
         window.showGameError = showError;
         
-        console.log('[Debug] Mobile fixes and error handlers initialized');
+        console.log('[Debug] Mobile fixes and error handlers initialized. Recovery attempt:', recoveryAttempt);
       })();
     </script>
     
