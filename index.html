@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="./favicon.ico" />
-    <!-- CRITICAL: Mobile viewport settings for iOS/Android -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- CRITICAL: Mobile viewport settings for iOS/Android - FIXED FOR MOBILE DISPLAY BUG -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -45,7 +45,10 @@
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Game container - uses visualViewport height for true fullscreen on mobile */
+      /* Game container - FULLSCREEN with NO black bars
+       * Uses visualViewport height for true fullscreen on mobile
+       * ENVELOP mode ensures canvas covers entire container
+       * FIXED: No safe-area padding - let canvas fill entire viewport */
       #game-container {
         position: fixed;
         top: 0;
@@ -53,7 +56,9 @@
         right: 0;
         bottom: 0;
         width: 100vw;
-        height: calc(var(--vvh, 1vh) * 100);
+        /* Use dvh (dynamic viewport height) with fallback for true fullscreen */
+        height: 100vh;
+        height: 100dvh;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -63,14 +68,18 @@
         overscroll-behavior: none;
       }
       
+      /* Canvas should fill container completely with ENVELOP mode
+       * Remove max-width/max-height constraints to allow full coverage */
       #game-container canvas {
         display: block;
-        max-width: 100%;
-        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        -o-object-fit: cover;
+           object-fit: cover;
         touch-action: none;
       }
       
-      /* UI Overlay Root - syncs perfectly with canvas position */
+      /* UI Overlay Root - syncs perfectly with canvas position via JS */
       #ui-overlay-root {
         position: absolute;
         top: 0;
@@ -259,25 +268,18 @@
         touch-action: manipulation;
       }
       
-      /* Safe area handling for notched devices */
-      @supports (padding: env(safe-area-inset-top)) {
-        #game-container {
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-          padding-left: env(safe-area-inset-left);
-          padding-right: env(safe-area-inset-right);
-        }
-      }
+      /* Safe area handling for notched devices
+       * NOTE: Removed padding on game-container as it conflicts with ENVELOP scale mode
+       * and causes black bars at bottom on some devices.
+       * UI elements should handle safe-area-inset individually instead.
+       */
+      /* @supports (padding: env(safe-area-inset-top)) - DISABLED for full screen coverage */
       
-      /* Fallback for dvh support */
-      @supports (height: 100dvh) {
-        #game-container {
-          height: 100dvh;
-        }
-      }
+      /* dvh (dynamic viewport height) is now the default with vh fallback
+       * This ensures full screen coverage on mobile even with address bar changes */
     </style>
-    <script type="module" crossorigin src="./assets/index-DP9Omewu.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-D1B8Z090.css">
+    <script type="module" crossorigin src="./assets/index-DTQvngFj.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DQZJ1Jdf.css">
   </head>
   <body>
     <div id="game-container">
@@ -314,82 +316,180 @@
         'use strict';
         
         // ===== 1. VISUAL VIEWPORT HEIGHT FIX (iOS/Android address bar) =====
+        // CRITICAL: Prevents "different screen" bug on mobile by using visualViewport.height
+        // Also triggers Phaser scale refresh for proper ENVELOP mode coverage
+        var lastVvh = 0;
+        var vvhUpdatePending = false;
+        
         function updateViewportHeight() {
-          try {
-            var vh;
-            if (window.visualViewport) {
-              vh = window.visualViewport.height * 0.01;
-            } else {
-              vh = window.innerHeight * 0.01;
+          if (vvhUpdatePending) return;
+          vvhUpdatePending = true;
+          
+          requestAnimationFrame(function() {
+            vvhUpdatePending = false;
+            try {
+              var vh;
+              if (window.visualViewport && window.visualViewport.height > 0) {
+                vh = window.visualViewport.height * 0.01;
+              } else if (window.innerHeight > 0) {
+                vh = window.innerHeight * 0.01;
+              } else {
+                vh = document.documentElement.clientHeight * 0.01 || 7.68; // fallback
+              }
+              
+              // Guard against non-finite values
+              if (!Number.isFinite(vh) || vh <= 0) {
+                vh = window.innerHeight > 0 ? window.innerHeight * 0.01 : 7.68;
+              }
+              
+              // Only update if value changed significantly (> 0.5px difference)
+              if (Math.abs(vh - lastVvh) > 0.005) {
+                lastVvh = vh;
+                document.documentElement.style.setProperty('--vvh', vh + 'px');
+                
+                // CRITICAL: Trigger Phaser scale refresh for ENVELOP mode
+                // This ensures canvas resizes properly to cover full viewport
+                if (window.game && window.game.scale) {
+                  try {
+                    window.game.scale.refresh();
+                  } catch (e) {
+                    console.warn('[VVH] Scale refresh error:', e);
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('[VVH] Update error:', e);
+              document.documentElement.style.setProperty('--vvh', '1vh');
             }
-            document.documentElement.style.setProperty('--vvh', vh + 'px');
-          } catch (e) {
-            // Fallback
-            document.documentElement.style.setProperty('--vvh', '1vh');
-          }
+          });
         }
         
         // Initial update
         updateViewportHeight();
         
         // Update on viewport changes
-        window.addEventListener('resize', updateViewportHeight);
+        window.addEventListener('resize', function() {
+          updateViewportHeight();
+          // Also refresh Phaser scale on resize
+          if (window.game && window.game.scale) {
+            try { window.game.scale.refresh(); } catch(e) {}
+          }
+        }, { passive: true });
+        
         window.addEventListener('orientationchange', function() {
-          setTimeout(updateViewportHeight, 100);
+          // Multiple delayed updates for orientation change (browser needs time to settle)
+          setTimeout(updateViewportHeight, 50);
+          setTimeout(updateViewportHeight, 150);
           setTimeout(updateViewportHeight, 300);
-          setTimeout(syncUIOverlay, 150);
+          setTimeout(function() {
+            updateViewportHeight();
+            syncUIOverlay();
+            // Force Phaser scale refresh after orientation settles
+            if (window.game && window.game.scale) {
+              try { window.game.scale.refresh(); } catch(e) {}
+            }
+          }, 500);
         });
         
         if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', updateViewportHeight);
-          window.visualViewport.addEventListener('scroll', updateViewportHeight);
+          window.visualViewport.addEventListener('resize', function() {
+            updateViewportHeight();
+            // Trigger Phaser refresh on visualViewport resize (iOS address bar)
+            if (window.game && window.game.scale) {
+              try { window.game.scale.refresh(); } catch(e) {}
+            }
+          }, { passive: true });
+          window.visualViewport.addEventListener('scroll', updateViewportHeight, { passive: true });
         }
         
         // ===== 2. UI OVERLAY SYNC - Canvas rect based positioning =====
+        // CRITICAL: Prevents "different screen" look by syncing overlay to canvas exactly
+        var lastSyncRect = { left: 0, top: 0, width: 0, height: 0 };
+        var syncPending = false;
+        var syncRetryCount = 0;
+        var maxSyncRetries = 5;
+        
         function syncUIOverlay() {
-          try {
-            var container = document.getElementById('game-container');
-            var overlay = document.getElementById('ui-overlay-root');
-            var canvas = container ? container.querySelector('canvas') : null;
+          if (syncPending) return;
+          syncPending = true;
+          
+          requestAnimationFrame(function() {
+            syncPending = false;
             
-            if (!overlay || !container) return;
-            
-            if (canvas) {
-              // Sync overlay to canvas position and size
-              var rect = canvas.getBoundingClientRect();
-              var containerRect = container.getBoundingClientRect();
+            try {
+              var container = document.getElementById('game-container');
+              var overlay = document.getElementById('ui-overlay-root');
+              var canvas = container ? container.querySelector('canvas') : null;
               
-              overlay.style.position = 'absolute';
-              overlay.style.left = (rect.left - containerRect.left) + 'px';
-              overlay.style.top = (rect.top - containerRect.top) + 'px';
-              overlay.style.width = rect.width + 'px';
-              overlay.style.height = rect.height + 'px';
-            } else {
-              // No canvas yet - fill container
-              overlay.style.position = 'absolute';
-              overlay.style.left = '0';
-              overlay.style.top = '0';
-              overlay.style.width = '100%';
-              overlay.style.height = '100%';
+              if (!overlay || !container) return;
+              
+              if (canvas) {
+                var rect = canvas.getBoundingClientRect();
+                var containerRect = container.getBoundingClientRect();
+                
+                // GUARD: Skip if rect values are 0 or non-finite
+                var w = rect.width;
+                var h = rect.height;
+                var l = rect.left - containerRect.left;
+                var t = rect.top - containerRect.top;
+                
+                if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+                  // Non-finite or zero dimensions - retry on next frame
+                  syncRetryCount++;
+                  if (syncRetryCount < maxSyncRetries) {
+                    setTimeout(syncUIOverlay, 100);
+                  }
+                  return;
+                }
+                
+                syncRetryCount = 0; // Reset retry count on success
+                
+                // Skip update if rect hasn't changed significantly
+                if (Math.abs(l - lastSyncRect.left) < 1 &&
+                    Math.abs(t - lastSyncRect.top) < 1 &&
+                    Math.abs(w - lastSyncRect.width) < 1 &&
+                    Math.abs(h - lastSyncRect.height) < 1) {
+                  return;
+                }
+                
+                lastSyncRect = { left: l, top: t, width: w, height: h };
+                
+                // Sync overlay to canvas position and size
+                overlay.style.position = 'absolute';
+                overlay.style.left = l + 'px';
+                overlay.style.top = t + 'px';
+                overlay.style.width = w + 'px';
+                overlay.style.height = h + 'px';
+              } else {
+                // No canvas yet - fill container
+                overlay.style.position = 'absolute';
+                overlay.style.left = '0';
+                overlay.style.top = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+              }
+            } catch (e) {
+              console.warn('[UIOverlay] Sync error:', e);
             }
-          } catch (e) {
-            console.warn('[UIOverlay] Sync error:', e);
-          }
+          });
         }
         
+        // Expose for external use
+        window.syncUIOverlay = syncUIOverlay;
+        
         // Sync overlay on resize/orientation
-        window.addEventListener('resize', syncUIOverlay);
+        window.addEventListener('resize', syncUIOverlay, { passive: true });
         window.addEventListener('orientationchange', function() {
           setTimeout(syncUIOverlay, 100);
           setTimeout(syncUIOverlay, 300);
+          setTimeout(syncUIOverlay, 500);
         });
         
-        // Continuous sync via requestAnimationFrame (light touch)
-        var lastSyncTime = 0;
-        function rafSync() {
-          var now = performance.now();
-          if (now - lastSyncTime > 100) { // Sync every 100ms max
-            lastSyncTime = now;
+        // Continuous sync via requestAnimationFrame (throttled to ~10fps for performance)
+        var lastRafSyncTime = 0;
+        function rafSync(now) {
+          if (now - lastRafSyncTime > 100) { // Sync every 100ms max
+            lastRafSyncTime = now;
             syncUIOverlay();
           }
           requestAnimationFrame(rafSync);
@@ -404,7 +504,10 @@
           scene: 'unknown',
           step: 'init',
           dpr: window.devicePixelRatio || 1,
-          isMobile: 'ontouchstart' in window || navigator.maxTouchPoints > 0
+          isMobile: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+          viewportWidth: 0,
+          viewportHeight: 0,
+          canvasRect: 'N/A'
         };
         
         function showError(type, message, stack) {
@@ -426,13 +529,25 @@
             errors.shift();
           }
           
+          // Update viewport info
+          gameInfo.viewportWidth = window.innerWidth;
+          gameInfo.viewportHeight = window.innerHeight;
+          
+          var canvas = document.querySelector('#game-container canvas');
+          if (canvas) {
+            var rect = canvas.getBoundingClientRect();
+            gameInfo.canvasRect = Math.round(rect.width) + 'x' + Math.round(rect.height);
+          }
+          
           // Build HTML with enhanced info
           var html = '<div class="debug-info">';
           html += 'Device: ' + (gameInfo.isMobile ? 'Mobile' : 'Desktop');
           html += ' | DPR: ' + gameInfo.dpr.toFixed(1);
           html += ' | Renderer: ' + gameInfo.renderer;
-          html += ' | Scene: ' + gameInfo.scene;
+          html += '<br>Scene: ' + gameInfo.scene;
           html += ' | Step: ' + gameInfo.step;
+          html += '<br>Viewport: ' + gameInfo.viewportWidth + 'x' + gameInfo.viewportHeight;
+          html += ' | Canvas: ' + gameInfo.canvasRect;
           html += '</div>';
           
           for (var i = errors.length - 1; i >= 0; i--) {
@@ -536,14 +651,14 @@
         function startWatchdog() {
           if (watchdogTimeout) clearTimeout(watchdogTimeout);
           
-          // 8 second timeout for first update
+          // 5 second timeout for first update (reduced from 8 for faster feedback)
           watchdogTimeout = setTimeout(function() {
             if (!gameStarted && !watchdogTriggered) {
               watchdogTriggered = true;
               console.error('[Watchdog] Game appears stuck - triggering recovery');
               showWatchdogOverlay();
             }
-          }, 8000);
+          }, 5000);
         }
         
         function stopWatchdog() {
@@ -579,8 +694,9 @@
               if (status) {
                 status.textContent = 'Reloading with safe settings...';
               }
-              // Increment and force canvas on next load
+              // Force canvas and lower resolution on next load
               sessionStorage.setItem('forceCanvasRenderer', 'true');
+              sessionStorage.setItem('forceResolution', '1');
               window.location.reload();
             } else {
               if (status) {
@@ -598,6 +714,7 @@
         window.forceCanvasFallback = function() {
           try {
             sessionStorage.setItem('forceCanvasRenderer', 'true');
+            sessionStorage.setItem('forceResolution', '1');
             sessionStorage.setItem('recoveryAttempt', '1');
           } catch(e) {}
           window.location.reload();

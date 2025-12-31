@@ -18,6 +18,65 @@
       }
     ]
   },
+  "backgrounds": {
+    "files": [
+      {
+        "type": "image",
+        "key": "dungeon_bg_tileset",
+        "url": "https://cdn-game-mcp.gambo.ai/52ffe014-40c3-41c1-a98b-286e292c0b53/uploads/52ffe014-40c3-41c1-a98b-286e292c0b53.png"
+      },
+      {
+        "type": "image",
+        "key": "bg01",
+        "url": "https://cdn-game-mcp.gambo.ai/c41eb284-4452-47da-ad67-68b56aadfc6b/uploads/c41eb284-4452-47da-ad67-68b56aadfc6b.png"
+      },
+      {
+        "type": "image",
+        "key": "bg02",
+        "url": "https://cdn-game-mcp.gambo.ai/c41eb284-4452-47da-ad67-68b56aadfc6b/uploads/c41eb284-4452-47da-ad67-68b56aadfc6b.png"
+      },
+      {
+        "type": "image",
+        "key": "ep1_swamp_hell_background",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/VbWBT-Eivg7PN1ajMik7G.png"
+      },
+      {
+        "type": "image",
+        "key": "ep1_r9_swamp_boss",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/Wd5ORPf80WHNkiDemmK_C.png"
+      },
+      {
+        "type": "image",
+        "key": "ep2_corpse_jungle_bg",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/Wd5ORPf80WHNkiDemmK_C.png"
+      },
+      {
+        "type": "image",
+        "key": "bg14",
+        "url": "https://cdn-game-mcp.gambo.ai/d3e118ee-7385-4010-b554-fc2b21c5e228/uploads/d3e118ee-7385-4010-b554-fc2b21c5e228.png"
+      },
+      {
+        "type": "image",
+        "key": "bg09",
+        "url": "https://cdn-game-mcp.gambo.ai/04a07f34-55cf-4efc-9949-dcd45e64740d/uploads/04a07f34-55cf-4efc-9949-dcd45e64740d.png"
+      },
+      {
+        "type": "image",
+        "key": "ep8_nightmare_park_background",
+        "url": "https://cdn-game-mcp.gambo.ai/18c582d1-80f7-4541-bbef-2ec2a7514d37/uploads/18c582d1-80f7-4541-bbef-2ec2a7514d37.png"
+      },
+      {
+        "type": "image",
+        "key": "ep9_hospital_background",
+        "url": "https://cdn-game-mcp.gambo.ai/f0a5f64e-2eb3-4d23-87c4-5bf580eddd30/uploads/f0a5f64e-2eb3-4d23-87c4-5bf580eddd30.png"
+      },
+      {
+        "type": "image",
+        "key": "ep11_r9_final_boss_background",
+        "url": "https://cdn-game-mcp.gambo.ai/6d602a6c-c208-4bf4-ba5f-b98f9eea5520/uploads/6d602a6c-c208-4bf4-ba5f-b98f9eea5520.png"
+      }
+    ]
+  },
   "images": {
     "files": [
       {
@@ -64,6 +123,16 @@
         "type": "image",
         "key": "shadow_bolt_projectile",
         "url": "https://cdn-game-mcp.gambo.ai/7ff705b3-f7d6-4418-930d-ec487ea469b5/images/shadow_bolt_projectile.png"
+      },
+      {
+        "type": "image",
+        "key": "boss_dark_orb_projectile",
+        "url": "https://cdn-game-mcp.gambo.ai/fdc27c01-2633-47cc-9173-af50dcd789c0/images/boss_dark_orb_projectile.png"
+      },
+      {
+        "type": "image",
+        "key": "boss_fire_skull_projectile",
+        "url": "https://cdn-game-mcp.gambo.ai/88a0b5c1-ee90-4735-9a8f-16f4e2688497/images/boss_fire_skull_projectile.png"
       },
       {
         "type": "image",
@@ -660,6 +729,16 @@
     "files": [
       {
         "type": "image",
+        "key": "spider_swamp_wall_tile",
+        "url": "https://cdn-game-mcp.gambo.ai/bc2c3433-7560-4e35-84b3-12546c18ae61/uploads/bc2c3433-7560-4e35-84b3-12546c18ae61.png"
+      },
+      {
+        "type": "image",
+        "key": "spider_web_overlay",
+        "url": "https://cdn-game-mcp.gambo.ai/3bb61ef3-e5a4-4e72-96f4-862789b67a2a/uploads/3bb61ef3-e5a4-4e72-96f4-862789b67a2a.png"
+      },
+      {
+        "type": "image",
         "key": "dungeon_stone_floor",
         "url": "https://cdn-game-mcp.gambo.ai/49f07f78-f5b6-40bb-9be3-ebcd6ede1774/tilesets/dungeon_stone_floor.png"
       },
@@ -671,7 +750,7 @@
       {
         "type": "image",
         "key": "town_cobblestone",
-        "url": "https://cdn-game-mcp.gambo.ai/7998535f-afc2-45f4-a4c9-9b3d39a1e583/tilesets/town_cobblestone.png"
+        "url": "https://cdn-gambo-public.gambo.ai/assets/SI0RjchxD2Y0hhGpEvDUV.png"
       },
       {
         "type": "image",
@@ -791,6 +870,16 @@
         "type": "audio",
         "key": "bow_shoot",
         "url": "https://cdn-game-mcp.gambo.ai/35edf562-4041-4d8c-98d7-051505dc058a/sound_effects/bow_shoot.mp3"
+      },
+      {
+        "type": "audio",
+        "key": "blood_dash_blade",
+        "url": "https://cdn-game-mcp.gambo.ai/93a0964f-e50b-4291-8b81-11b21789f4d1/sound_effects/blood_dash_blade.mp3"
+      },
+      {
+        "type": "audio",
+        "key": "ice_ball_cast",
+        "url": "https://cdn-game-mcp.gambo.ai/ba9b163d-62b2-42bf-a08a-a970fdff33c0/sound_effects/ice_ball_cast.mp3"
       }
     ]
   },
@@ -810,6 +899,71 @@
         "type": "audio",
         "key": "town_peaceful",
         "url": "https://cdn-game-mcp.gambo.ai/1c58a89f-6be6-44c9-ab36-1cb1b32886a6/music/town_peaceful.mp3"
+      },
+      {
+        "type": "image",
+        "key": "bloody_corpse_front_view",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/FHJHbsKNxM43kpez_7o4v.png"
+      },
+      {
+        "type": "image",
+        "key": "bloody_corpse_side_view",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/FHJHbsKNxM43kpez_7o4v.png"
+      },
+      {
+        "type": "image",
+        "key": "bloody_corpse_back_view",
+        "url": "https://cdn-gambo-public.gambo.ai/assets/FHJHbsKNxM43kpez_7o4v.png"
+      },
+      {
+        "type": "image",
+        "key": "purple_mage",
+        "url": "https://cdn-game-mcp.gambo.ai/f6973c0d-6172-4a43-8acd-18af5d5f41ce/uploads/f6973c0d-6172-4a43-8acd-18af5d5f41ce.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_side_view",
+        "url": "https://cdn-game-mcp.gambo.ai/7b6af874-64bb-43cd-8d1e-ef96ee6d0c0a/images/Balrog Demon_side_view.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_front_view",
+        "url": "https://cdn-game-mcp.gambo.ai/85854561-40b1-4875-8a36-d0a9613139be/images/Balrog Demon_front_view.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_back_view",
+        "url": "https://cdn-game-mcp.gambo.ai/3302a118-96e8-4ea2-9b90-5e9bdc635b91/images/Balrog Demon_back_view.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_R_frame1",
+        "url": "https://cdn-game-mcp.gambo.ai/ec85cb54-5e9e-4224-8b1a-ac7ddeb0222f/animations/balrog_idle_R/frame_1.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_R_frame2",
+        "url": "https://cdn-game-mcp.gambo.ai/68e9064c-71a0-48d5-8020-1cbfefbc63a2/animations/balrog_idle_R/frame_2.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_front_frame1",
+        "url": "https://cdn-game-mcp.gambo.ai/12491c44-6a6c-42d7-b77d-d0846797a5d4/animations/balrog_idle_front/frame_1.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_front_frame2",
+        "url": "https://cdn-game-mcp.gambo.ai/e61413b6-6931-4050-9bba-b0615528426e/animations/balrog_idle_front/frame_2.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_back_frame1",
+        "url": "https://cdn-game-mcp.gambo.ai/bd8b7d70-d53a-4450-b632-d59173deb478/animations/balrog_idle_back/frame_1.png"
+      },
+      {
+        "type": "image",
+        "key": "balrog_idle_back_frame2",
+        "url": "https://cdn-game-mcp.gambo.ai/ed604410-5059-4796-9cfe-6bb56a528839/animations/balrog_idle_back/frame_2.png"
       }
     ]
   },
