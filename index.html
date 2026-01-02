@@ -277,9 +277,73 @@
       
       /* dvh (dynamic viewport height) is now the default with vh fallback
        * This ensures full screen coverage on mobile even with address bar changes */
+      
+      /* Portrait mode blocker - Forces landscape mode on mobile */
+      #portrait-blocker {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        color: white;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        z-index: 999999;
+        padding: 30px;
+      }
+      
+      #portrait-blocker.visible {
+        display: flex;
+      }
+      
+      #portrait-blocker .rotate-icon {
+        font-size: 80px;
+        margin-bottom: 24px;
+        animation: rotatePhone 2s ease-in-out infinite;
+      }
+      
+      @keyframes rotatePhone {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-15deg); }
+        75% { transform: rotate(15deg); }
+      }
+      
+      #portrait-blocker h2 {
+        color: #ffffff;
+        margin-bottom: 16px;
+        font-size: 24px;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      }
+      
+      #portrait-blocker p {
+        color: #b0b0b0;
+        margin-bottom: 12px;
+        font-size: 16px;
+        max-width: 300px;
+        line-height: 1.5;
+      }
+      
+      #portrait-blocker .hint {
+        color: #7c3aed;
+        font-size: 14px;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background: rgba(124, 58, 237, 0.15);
+        border-radius: 8px;
+        border: 1px solid rgba(124, 58, 237, 0.3);
+      }
     </style>
-    <script type="module" crossorigin src="./assets/index-DTQvngFj.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DQZJ1Jdf.css">
+    <script type="module" crossorigin src="./assets/index-CbeXq9Iv.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Dltgs8cI.css">
   </head>
   <body>
     <div id="game-container">
@@ -310,10 +374,83 @@
       <button onclick="window.location.reload()">Reload Now</button>
     </div>
     
+    <!-- Portrait mode blocker - Forces landscape on mobile -->
+    <div id="portrait-blocker">
+      <div class="rotate-icon">📱</div>
+      <h2>Rotate Your Device</h2>
+      <p>This game is designed for landscape mode only.</p>
+      <p>Please rotate your device horizontally to continue.</p>
+      <div class="hint">🔄 Turn your phone sideways</div>
+    </div>
+    
     <!-- Global error handlers & Mobile fixes - MUST load before main.ts -->
     <script>
       (function() {
         'use strict';
+        
+        // ===== 0. PORTRAIT MODE BLOCKER (Force Landscape on Mobile) =====
+        // Detects if device is in portrait mode and shows blocker overlay
+        function checkOrientation() {
+          var portraitBlocker = document.getElementById('portrait-blocker');
+          if (!portraitBlocker) return;
+          
+          // Check if mobile device (touch capability or small screen)
+          var hasTouchCapability = 
+            navigator.maxTouchPoints >= 1 ||
+            'ontouchstart' in window ||
+            window.matchMedia('(pointer: coarse)').matches;
+          
+          var minDimension = Math.min(window.innerWidth, window.innerHeight);
+          var isMobile = hasTouchCapability || minDimension <= 820;
+          
+          // Check if portrait mode (height > width)
+          var isPortrait = window.innerHeight > window.innerWidth;
+          
+          if (isMobile && isPortrait) {
+            // Show portrait blocker, pause game
+            portraitBlocker.classList.add('visible');
+            if (window.game && window.game.scene) {
+              try {
+                var activeScenes = window.game.scene.getScenes(true);
+                activeScenes.forEach(function(scene) {
+                  if (scene.scene && scene.scene.pause) {
+                    scene.scene.pause();
+                  }
+                });
+              } catch (e) { /* ignore */ }
+            }
+          } else {
+            // Hide portrait blocker, resume game
+            portraitBlocker.classList.remove('visible');
+            if (window.game && window.game.scene) {
+              try {
+                var activeScenes = window.game.scene.getScenes(false);
+                activeScenes.forEach(function(scene) {
+                  if (scene.scene && scene.scene.resume && scene.scene.isPaused()) {
+                    scene.scene.resume();
+                  }
+                });
+              } catch (e) { /* ignore */ }
+            }
+          }
+        }
+        
+        // Check orientation on load, resize, and orientation change
+        window.addEventListener('load', checkOrientation);
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', function() {
+          // Delay check to allow browser to settle after orientation change
+          setTimeout(checkOrientation, 100);
+          setTimeout(checkOrientation, 300);
+          setTimeout(checkOrientation, 500);
+        });
+        
+        // Initial check
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', checkOrientation);
+        } else {
+          checkOrientation();
+        }
         
         // ===== 1. VISUAL VIEWPORT HEIGHT FIX (iOS/Android address bar) =====
         // CRITICAL: Prevents "different screen" bug on mobile by using visualViewport.height
