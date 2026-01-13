@@ -45,20 +45,71 @@
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Game container - FULLSCREEN with NO black bars
-       * Uses visualViewport height for true fullscreen on mobile
-       * ENVELOP mode ensures canvas covers entire container
-       * FIXED: No safe-area padding - let canvas fill entire viewport */
-      #game-container {
+      /* 3-Column Layout Container - UI | Game | UI (10% | 80% | 10%) 
+       * This layout is for MOBILE only - on desktop, panels are hidden */
+      #main-layout {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         width: 100vw;
-        /* Use dvh (dynamic viewport height) with fallback for true fullscreen */
+        height: 100%;
         height: 100vh;
-        height: 100dvh;
+        height: -webkit-fill-available;
+        display: flex;
+        flex-direction: row;
+        background: #0a0515;
+        touch-action: none;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+      
+      /* Left UI Panel - 10% width (Joystick area) - MOBILE ONLY */
+      #left-ui-panel {
+        width: 10%;
+        min-width: 80px;
+        max-width: 120px;
+        height: 100%;
+        background: linear-gradient(180deg, rgba(15, 5, 30, 0.98) 0%, rgba(10, 5, 20, 0.95) 100%);
+        border-right: 2px solid rgba(80, 60, 90, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 20px;
+        position: relative;
+        z-index: 1001;
+        box-shadow: 3px 0 15px rgba(0, 0, 0, 0.5);
+      }
+      
+      /* Right UI Panel - 10% width (Skill buttons) - MOBILE ONLY */
+      #right-ui-panel {
+        width: 10%;
+        min-width: 80px;
+        max-width: 120px;
+        height: 100%;
+        background: linear-gradient(180deg, rgba(15, 5, 30, 0.98) 0%, rgba(10, 5, 20, 0.95) 100%);
+        border-left: 2px solid rgba(80, 60, 90, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 20px;
+        position: relative;
+        z-index: 1001;
+        box-shadow: -3px 0 15px rgba(0, 0, 0, 0.5);
+      }
+      
+      /* UNIFIED LAYOUT: Same layout for both PC and Mobile
+       * Both desktop and mobile now show the 3-column layout:
+       * Left UI Panel (10%) | Game (80%) | Right UI Panel (10%)
+       * This ensures consistent experience across all devices */
+      
+      /* Game container - CENTER 80% area (100% on desktop) */
+      #game-container {
+        flex: 1;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -66,17 +117,26 @@
         touch-action: none;
         overflow: hidden;
         overscroll-behavior: none;
+        position: relative;
       }
       
-      /* Canvas should fill container completely with ENVELOP mode
-       * Remove max-width/max-height constraints to allow full coverage */
+      /* Canvas should fill center game container (80% area) */
       #game-container canvas {
         display: block;
         width: 100%;
         height: 100%;
-        -o-object-fit: cover;
-           object-fit: cover;
+        max-width: 100%;
+        max-height: 100%;
         touch-action: none;
+        -o-object-fit: contain;
+           object-fit: contain;
+        /* Custom cursor: Large arrow pointer for better visibility */
+        cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="2,2 2,26 8,20 14,30 18,28 12,18 22,18" fill="%23ffffff" stroke="%23000000" stroke-width="2"/></svg>') 2 2, auto;
+      }
+      
+      /* Game container also needs custom cursor */
+      #game-container {
+        cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="2,2 2,26 8,20 14,30 18,28 12,18 22,18" fill="%23ffffff" stroke="%23000000" stroke-width="2"/></svg>') 2 2, auto;
       }
       
       /* UI Overlay Root - syncs perfectly with canvas position via JS */
@@ -286,8 +346,9 @@
         right: 0;
         bottom: 0;
         width: 100vw;
+        height: 100%;
         height: 100vh;
-        height: 100dvh;
+        height: -webkit-fill-available;
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         color: white;
         font-family: 'Segoe UI', Arial, sans-serif;
@@ -342,13 +403,31 @@
         border: 1px solid rgba(124, 58, 237, 0.3);
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-CbeXq9Iv.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Dltgs8cI.css">
+    <script type="module" crossorigin src="./assets/index-Cj-G-w-D.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-AQTo6H6H.css">
   </head>
   <body>
-    <div id="game-container">
-      <!-- UI Overlay Root - positioned exactly on top of canvas -->
-      <div id="ui-overlay-root"></div>
+    <!-- 3-Column Layout: Left UI | Game | Right UI -->
+    <div id="main-layout">
+      <!-- Left UI Panel - Joystick Area (10%) -->
+      <div id="left-ui-panel">
+        <div id="left-panel-content" class="w-full h-full flex flex-col items-center justify-end pb-4">
+          <!-- Joystick will be moved here by UIScene -->
+        </div>
+      </div>
+      
+      <!-- Game Container (80%) -->
+      <div id="game-container">
+        <!-- UI Overlay Root - positioned exactly on top of canvas -->
+        <div id="ui-overlay-root"></div>
+      </div>
+      
+      <!-- Right UI Panel - Skill Buttons Area (10%) -->
+      <div id="right-ui-panel">
+        <div id="right-panel-content" class="w-full h-full flex flex-col items-center justify-end pb-4">
+          <!-- Skill buttons will be moved here by UIScene -->
+        </div>
+      </div>
     </div>
     
     <!-- Debug overlay for mobile error display -->
@@ -366,12 +445,25 @@
       <button onclick="window.forceCanvasFallback && window.forceCanvasFallback()">Try Safe Mode</button>
     </div>
     
-    <!-- WebGL context lost overlay -->
+    <!-- WebGL context lost overlay - MOBILE SAFEMODE ENHANCED -->
     <div id="webgl-lost-overlay">
-      <h2>Graphics Error</h2>
+      <h2>⚠️ Graphics Error</h2>
       <p>The game's graphics context was lost.<br>This can happen due to low memory or background activity.</p>
-      <div class="countdown" id="webgl-countdown">Auto-recovering in 3s...</div>
-      <button onclick="window.location.reload()">Reload Now</button>
+      <div class="countdown" id="webgl-countdown">Attempting recovery...</div>
+      <div id="webgl-recovery-options" style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+        <button id="webgl-safemode-btn" onclick="window.enterSafeMode && window.enterSafeMode()" style="background: #22c55e;">
+          ✅ Restart in Safe Mode (Recommended)
+        </button>
+        <button onclick="window.location.reload()" style="background: #7c3aed;">
+          🔄 Reload Game
+        </button>
+        <button id="webgl-retry-btn" onclick="window.attemptRendererRecovery && window.attemptRendererRecovery()" style="background: #6b7280; font-size: 12px;">
+          🔧 Try Minimal Recovery
+        </button>
+      </div>
+      <div id="webgl-info" style="margin-top: 12px; font-size: 11px; color: #888;">
+        <span id="webgl-device-info">Device: checking...</span>
+      </div>
     </div>
     
     <!-- Portrait mode blocker - Forces landscape on mobile -->
@@ -394,17 +486,24 @@
           var portraitBlocker = document.getElementById('portrait-blocker');
           if (!portraitBlocker) return;
           
-          // Check if mobile device (touch capability or small screen)
-          var hasTouchCapability = 
-            navigator.maxTouchPoints >= 1 ||
-            'ontouchstart' in window ||
-            window.matchMedia('(pointer: coarse)').matches;
+          // Check if mobile device (touch capability or small screen) - with safety guards
+          var hasTouchCapability = false;
+          try {
+            hasTouchCapability = 
+              (typeof navigator !== 'undefined' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints >= 1) ||
+              ('ontouchstart' in window) ||
+              (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches);
+          } catch (e) {
+            hasTouchCapability = false;
+          }
           
-          var minDimension = Math.min(window.innerWidth, window.innerHeight);
+          var innerW = typeof window.innerWidth === 'number' && window.innerWidth > 0 ? window.innerWidth : 1152;
+          var innerH = typeof window.innerHeight === 'number' && window.innerHeight > 0 ? window.innerHeight : 768;
+          var minDimension = Math.min(innerW, innerH);
           var isMobile = hasTouchCapability || minDimension <= 820;
           
-          // Check if portrait mode (height > width)
-          var isPortrait = window.innerHeight > window.innerWidth;
+          // Check if portrait mode (height > width) - with safety guards
+          var isPortrait = innerH > innerW;
           
           if (isMobile && isPortrait) {
             // Show portrait blocker, pause game
@@ -539,6 +638,71 @@
           window.visualViewport.addEventListener('scroll', updateViewportHeight, { passive: true });
         }
         
+        // ===== 1.5 CANVAS SIZE ENFORCEMENT (Prevent Mobile Clipping) =====
+        // CRITICAL: Ensures canvas dimensions never exceed visual viewport
+        var canvasSizeCheckPending = false;
+        
+        function enforceCanvasSizeLimit() {
+          if (canvasSizeCheckPending) return;
+          canvasSizeCheckPending = true;
+          
+          requestAnimationFrame(function() {
+            canvasSizeCheckPending = false;
+            
+            try {
+              var canvas = document.querySelector('#game-container canvas');
+              if (!canvas) return;
+              
+              // Get usable viewport dimensions
+              var vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+              var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+              
+              // Guard against NaN
+              if (!Number.isFinite(vw) || vw <= 0) vw = window.innerWidth || 1152;
+              if (!Number.isFinite(vh) || vh <= 0) vh = window.innerHeight || 768;
+              
+              // Get current canvas rect
+              var rect = canvas.getBoundingClientRect();
+              
+              // Check if canvas exceeds viewport (mobile clipping issue)
+              if (rect.width > vw + 5 || rect.height > vh + 5) {
+                console.warn('[Canvas] Detected overflow: Canvas ' + Math.round(rect.width) + 'x' + Math.round(rect.height) + ' > Viewport ' + Math.round(vw) + 'x' + Math.round(vh));
+                
+                // Force canvas to fit within viewport
+                canvas.style.maxWidth = vw + 'px';
+                canvas.style.maxHeight = vh + 'px';
+                
+                // Trigger Phaser scale refresh
+                if (window.game && window.game.scale) {
+                  try {
+                    window.game.scale.refresh();
+                  } catch (e) {
+                    console.warn('[Canvas] Scale refresh error:', e);
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('[Canvas] Size enforcement error:', e);
+            }
+          });
+        }
+        
+        // Check canvas size on resize/orientation
+        window.addEventListener('resize', enforceCanvasSizeLimit, { passive: true });
+        window.addEventListener('orientationchange', function() {
+          setTimeout(enforceCanvasSizeLimit, 100);
+          setTimeout(enforceCanvasSizeLimit, 300);
+          setTimeout(enforceCanvasSizeLimit, 500);
+        });
+        
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', enforceCanvasSizeLimit, { passive: true });
+        }
+        
+        // Initial check after a delay (canvas might not exist yet)
+        setTimeout(enforceCanvasSizeLimit, 500);
+        setTimeout(enforceCanvasSizeLimit, 1000);
+        
         // ===== 2. UI OVERLAY SYNC - Canvas rect based positioning =====
         // CRITICAL: Prevents "different screen" look by syncing overlay to canvas exactly
         var lastSyncRect = { left: 0, top: 0, width: 0, height: 0 };
@@ -556,21 +720,38 @@
             try {
               var container = document.getElementById('game-container');
               var overlay = document.getElementById('ui-overlay-root');
-              var canvas = container ? container.querySelector('canvas') : null;
               
               if (!overlay || !container) return;
               
+              // Safely query canvas
+              var canvas = null;
+              try {
+                canvas = container.querySelector('canvas');
+              } catch (e) {
+                // querySelector may fail in edge cases
+                return;
+              }
+              
               if (canvas) {
-                var rect = canvas.getBoundingClientRect();
-                var containerRect = container.getBoundingClientRect();
+                var rect, containerRect;
+                try {
+                  rect = canvas.getBoundingClientRect();
+                  containerRect = container.getBoundingClientRect();
+                } catch (e) {
+                  // getBoundingClientRect may fail during page transition
+                  return;
+                }
                 
-                // GUARD: Skip if rect values are 0 or non-finite
-                var w = rect.width;
-                var h = rect.height;
-                var l = rect.left - containerRect.left;
-                var t = rect.top - containerRect.top;
+                // GUARD: Skip if rect is null/undefined
+                if (!rect || !containerRect) return;
                 
-                if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+                // GUARD: Skip if rect values are 0 or non-finite - with type checking
+                var w = typeof rect.width === 'number' ? rect.width : 0;
+                var h = typeof rect.height === 'number' ? rect.height : 0;
+                var l = (typeof rect.left === 'number' ? rect.left : 0) - (typeof containerRect.left === 'number' ? containerRect.left : 0);
+                var t = (typeof rect.top === 'number' ? rect.top : 0) - (typeof containerRect.top === 'number' ? containerRect.top : 0);
+                
+                if (!Number.isFinite(w) || !Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(t) || w <= 0 || h <= 0) {
                   // Non-finite or zero dimensions - retry on next frame
                   syncRetryCount++;
                   if (syncRetryCount < maxSyncRetries) {
@@ -708,19 +889,55 @@
           if (info.step) gameInfo.step = info.step;
         };
         
-        // ===== 4. GLOBAL ERROR HANDLERS =====
+        // ===== 4. GLOBAL ERROR HANDLERS (Enhanced for Window error {} fix) =====
+        // CRITICAL: Handles empty error objects that cause "Window error: {}" on mobile
         window.onerror = function(message, source, lineno, colno, error) {
           var errorMessage = message || 'Unknown error';
           var stack = '';
+          var detailedInfo = '';
           
-          if (error && error.stack) {
-            stack = error.stack.substring(0, 500);
-          } else if (source) {
-            stack = 'at ' + source + ':' + lineno + ':' + colno;
+          // ENHANCED: Handle empty error objects {}
+          if (error) {
+            if (error.stack) {
+              stack = error.stack.substring(0, 500);
+            }
+            if (error.message) {
+              errorMessage = error.message;
+            }
+            // Check for empty error object
+            if (typeof error === 'object' && Object.keys(error).length === 0) {
+              detailedInfo = '[Empty error object detected]';
+            }
           }
           
-          console.error('[Global Error]', errorMessage, stack);
-          showError('Error', String(errorMessage), stack);
+          // Always include source info
+          if (source) {
+            detailedInfo += ' at ' + source + ':' + (lineno || '?') + ':' + (colno || '?');
+          }
+          
+          // Log detailed info for debugging
+          var fullMessage = String(errorMessage);
+          if (detailedInfo) {
+            fullMessage += '\n' + detailedInfo;
+          }
+          
+          // Check for non-critical errors that should not crash the game
+          var isNonCritical = false;
+          var errorStr = String(errorMessage).toLowerCase();
+          if (errorStr.includes('passive') || 
+              errorStr.includes('touchstart') ||
+              errorStr.includes('touchmove') ||
+              errorStr.includes('resize') ||
+              errorStr.includes('script error')) {
+            isNonCritical = true;
+          }
+          
+          console.error('[Global Error]', fullMessage, stack || '(no stack)');
+          
+          // Only show UI for critical errors
+          if (!isNonCritical) {
+            showError('Error', fullMessage, stack);
+          }
           
           // Prevent crash - return true to mark as handled
           return true;
@@ -730,29 +947,73 @@
           var reason = event.reason;
           var message = 'Promise rejected';
           var stack = '';
+          var detailedInfo = '';
           
           if (reason) {
             if (typeof reason === 'string') {
               message = reason;
-            } else if (reason.message) {
-              message = reason.message;
+            } else if (reason instanceof Error) {
+              message = reason.message || 'Error';
               if (reason.stack) {
                 stack = reason.stack.substring(0, 500);
               }
-            } else {
-              try {
-                message = JSON.stringify(reason).substring(0, 200);
-              } catch (e) {
-                message = 'Unknown promise rejection';
+            } else if (reason && typeof reason === 'object') {
+              // ENHANCED: Handle empty reason objects
+              if (Object.keys(reason).length === 0) {
+                message = 'Empty rejection reason';
+                detailedInfo = '[Empty object {} received - possible internal error]';
+              } else if (reason.message) {
+                message = reason.message;
+                if (reason.stack) {
+                  stack = reason.stack.substring(0, 500);
+                }
+              } else {
+                try {
+                  message = JSON.stringify(reason).substring(0, 200);
+                } catch (e) {
+                  message = 'Unknown promise rejection';
+                }
               }
             }
           }
           
-          console.warn('[Unhandled Rejection]', message, stack);
-          showError('Promise Rejection', message, stack);
+          var fullMessage = message;
+          if (detailedInfo) {
+            fullMessage += '\n' + detailedInfo;
+          }
+          
+          console.warn('[Unhandled Rejection]', fullMessage, stack || '(no stack)');
+          showError('Promise Rejection', fullMessage, stack);
           
           event.preventDefault();
         });
+        
+        // ENHANCED: Catch error events on window (for cross-origin and other edge cases)
+        window.addEventListener('error', function(event) {
+          // Only handle ErrorEvent, not other event types
+          if (!(event instanceof ErrorEvent)) return;
+          
+          var message = event.message || 'Unknown error event';
+          var source = event.filename || '';
+          var lineno = event.lineno || 0;
+          var colno = event.colno || 0;
+          var stack = '';
+          
+          if (event.error && event.error.stack) {
+            stack = event.error.stack.substring(0, 500);
+          }
+          
+          // Build location info
+          var locationInfo = '';
+          if (source) {
+            locationInfo = ' at ' + source + ':' + lineno + ':' + colno;
+          }
+          
+          console.error('[Window Error Event]', message + locationInfo, stack || '(no stack)');
+          
+          // Prevent default to avoid duplicate handling
+          event.preventDefault();
+        }, true);
         
         // Console.error capture for mobile debugging
         var originalConsoleError = console.error;
@@ -788,14 +1049,15 @@
         function startWatchdog() {
           if (watchdogTimeout) clearTimeout(watchdogTimeout);
           
-          // 5 second timeout for first update (reduced from 8 for faster feedback)
+          // 20 second timeout for first update (increased for slower mobile devices)
+          // The game signals multiple times during loading, so if we don't hear back in 20s, it's truly stuck
           watchdogTimeout = setTimeout(function() {
             if (!gameStarted && !watchdogTriggered) {
               watchdogTriggered = true;
               console.error('[Watchdog] Game appears stuck - triggering recovery');
               showWatchdogOverlay();
             }
-          }, 5000);
+          }, 20000);
         }
         
         function stopWatchdog() {
@@ -890,19 +1152,109 @@
           } catch(e) {}
         };
         
-        // Start watchdog immediately
-        startWatchdog();
+        // Start watchdog after a delay to allow page to initialize
+        // MOBILE FIX: Delay watchdog start to prevent false positives during slow page load
+        setTimeout(startWatchdog, 500);
         
-        // ===== 6. WEBGL CONTEXT HANDLING =====
+        // ===== 6. WEBGL CONTEXT HANDLING - MOBILE SAFEMODE ENHANCED =====
         var webglRecoveryAttempts = 0;
         var maxWebglRecovery = 3;
+        var contextLostTime = 0;
+        var recoveryInProgress = false;
+        
+        // Detect iOS Safari for special handling
+        function isIOSSafari() {
+          var ua = navigator.userAgent || '';
+          var isIOS = /iPad|iPhone|iPod/.test(ua) || 
+            ((navigator.platform || '') === 'MacIntel' && navigator.maxTouchPoints > 1);
+          var isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
+          return isIOS || isSafari;
+        }
+        
+        // MOBILE SAFEMODE: Enter safe mode with minimal settings
+        window.enterSafeMode = function() {
+          console.log('[WebGL] Entering Safe Mode...');
+          try {
+            sessionStorage.setItem('forceCanvasRenderer', 'true');
+            sessionStorage.setItem('forceResolution', '1');
+            sessionStorage.setItem('forceSafeMode', 'true');
+            sessionStorage.setItem('recoveryAttempt', '1');
+          } catch(e) {
+            console.warn('[WebGL] sessionStorage error:', e);
+          }
+          window.location.reload();
+        };
+        
+        // MOBILE SAFEMODE: Attempt minimal recovery without full reload
+        window.attemptRendererRecovery = function() {
+          if (recoveryInProgress) return;
+          recoveryInProgress = true;
+          
+          console.log('[WebGL] Attempting minimal renderer recovery...');
+          var countdownEl = document.getElementById('webgl-countdown');
+          if (countdownEl) {
+            countdownEl.textContent = 'Attempting minimal recovery...';
+          }
+          
+          try {
+            if (window.game && window.game.scene) {
+              // Try to restart current scene without full page reload
+              var activeScenes = window.game.scene.getScenes(true);
+              if (activeScenes && activeScenes.length > 0) {
+                var currentScene = activeScenes[0];
+                console.log('[WebGL] Restarting scene:', currentScene.scene.key);
+                
+                // Pause briefly to allow GPU recovery
+                setTimeout(function() {
+                  try {
+                    currentScene.scene.restart();
+                    
+                    // Hide overlay after successful restart
+                    setTimeout(function() {
+                      var overlay = document.getElementById('webgl-lost-overlay');
+                      if (overlay) {
+                        overlay.classList.remove('visible');
+                      }
+                      recoveryInProgress = false;
+                    }, 500);
+                  } catch (e) {
+                    console.error('[WebGL] Scene restart failed:', e);
+                    if (countdownEl) {
+                      countdownEl.textContent = 'Recovery failed. Please use Safe Mode.';
+                    }
+                    recoveryInProgress = false;
+                  }
+                }, 1000);
+                return;
+              }
+            }
+          } catch (e) {
+            console.error('[WebGL] Recovery error:', e);
+          }
+          
+          if (countdownEl) {
+            countdownEl.textContent = 'Recovery failed. Please use Safe Mode or Reload.';
+          }
+          recoveryInProgress = false;
+        };
         
         function setupWebGLHandlers() {
           var gameContainer = document.getElementById('game-container');
           var webglLostOverlay = document.getElementById('webgl-lost-overlay');
           var countdownEl = document.getElementById('webgl-countdown');
+          var deviceInfoEl = document.getElementById('webgl-device-info');
           
           if (!gameContainer || !webglLostOverlay) return;
+          
+          // Update device info display
+          if (deviceInfoEl) {
+            var isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            var isIOS = isIOSSafari();
+            deviceInfoEl.textContent = 'Device: ' + (isMobile ? 'Mobile' : 'Desktop') + 
+              (isIOS ? ' (iOS Safari)' : '') + 
+              ' | DPR: ' + (window.devicePixelRatio || 1).toFixed(1) +
+              ' | Recovery: ' + webglRecoveryAttempts;
+          }
           
           function findAndSetupCanvas() {
             var canvas = gameContainer.querySelector('canvas');
@@ -916,48 +1268,88 @@
               console.error('[WebGL] Context lost');
               event.preventDefault();
               
-              webglLostOverlay.classList.add('visible');
-              showError('WebGL', 'Graphics context lost', '');
+              contextLostTime = Date.now();
+              webglRecoveryAttempts++;
               
-              // Auto-recovery countdown
-              var countdown = 3;
-              var countdownInterval = setInterval(function() {
-                countdown--;
+              // Update device info
+              if (deviceInfoEl) {
+                deviceInfoEl.textContent = 'Device: ' + (('ontouchstart' in window) ? 'Mobile' : 'Desktop') + 
+                  ' | Recovery attempt: ' + webglRecoveryAttempts + '/' + maxWebglRecovery;
+              }
+              
+              webglLostOverlay.classList.add('visible');
+              showError('WebGL', 'Graphics context lost (attempt ' + webglRecoveryAttempts + ')', '');
+              
+              // MOBILE SAFEMODE: Different behavior based on device and attempt count
+              if (isIOSSafari() || webglRecoveryAttempts >= 2) {
+                // iOS Safari or multiple failures: recommend Safe Mode immediately
                 if (countdownEl) {
-                  countdownEl.textContent = 'Auto-recovering in ' + countdown + 's...';
+                  countdownEl.textContent = 'iOS detected - Safe Mode recommended';
                 }
-                if (countdown <= 0) {
-                  clearInterval(countdownInterval);
-                  webglRecoveryAttempts++;
-                  
-                  if (webglRecoveryAttempts >= maxWebglRecovery) {
-                    // Force canvas fallback after multiple WebGL failures
-                    window.forceCanvasFallback();
-                  } else {
-                    window.location.reload();
+                // Auto-enter safe mode after 5 seconds if no user action
+                setTimeout(function() {
+                  if (webglLostOverlay.classList.contains('visible')) {
+                    console.log('[WebGL] Auto-entering Safe Mode for iOS stability');
+                    window.enterSafeMode();
                   }
+                }, 5000);
+              } else {
+                // First attempt on non-iOS: try automatic recovery
+                var countdown = 5;
+                if (countdownEl) {
+                  countdownEl.textContent = 'Auto-recovery in ' + countdown + 's...';
                 }
-              }, 1000);
+                
+                var countdownInterval = setInterval(function() {
+                  countdown--;
+                  if (countdownEl) {
+                    countdownEl.textContent = 'Auto-recovery in ' + countdown + 's...';
+                  }
+                  if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    
+                    if (webglRecoveryAttempts >= maxWebglRecovery) {
+                      // Max attempts reached: force safe mode
+                      window.enterSafeMode();
+                    } else {
+                      // Try reload first
+                      window.location.reload();
+                    }
+                  }
+                }, 1000);
+              }
             }, false);
             
             canvas.addEventListener('webglcontextrestored', function(event) {
               console.log('[WebGL] Context restored');
+              var restoreTime = Date.now() - contextLostTime;
+              console.log('[WebGL] Context restored after ' + restoreTime + 'ms');
+              
               webglLostOverlay.classList.remove('visible');
               
               try {
                 if (window.game && window.game.scene) {
                   var activeScenes = window.game.scene.getScenes(true);
                   if (activeScenes && activeScenes.length > 0) {
-                    activeScenes[0].scene.restart();
+                    // Brief delay to ensure GPU is ready
+                    setTimeout(function() {
+                      try {
+                        activeScenes[0].scene.restart();
+                        console.log('[WebGL] Scene restarted successfully');
+                      } catch (e) {
+                        console.warn('[WebGL] Scene restart failed:', e);
+                        window.location.reload();
+                      }
+                    }, 500);
                   }
                 }
               } catch (e) {
-                console.warn('[WebGL] Scene restart failed:', e);
+                console.warn('[WebGL] Context restore handling failed:', e);
                 window.location.reload();
               }
             }, false);
             
-            console.log('[WebGL] Context handlers attached');
+            console.log('[WebGL] Context handlers attached (SafeMode enhanced)');
           }
           
           findAndSetupCanvas();
